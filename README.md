@@ -1,16 +1,9 @@
 # 5-stage-pipeline-cpu
-实现了5段流水的CPU This project is verilog that implements 5-stage-pipeline-cpu
+5段流水CPU
 
-和此仓库配套的bilibili讲解地址在这：https://www.bilibili.com/video/BV1bf4y1w7hA
+配套的bilibili讲解地址：https://www.bilibili.com/video/BV1bf4y1w7hA
 
----
 
-## 关于作者
-- [@lerogo](https://github.com/lerogo/ "@lerogo"), 我的[博客](https://blog.lerogo.com/)，如果你想[给我点钱买葡萄冻冻](https://pay.lerogo.com/)🤣
-- 当前代码仓库 [5-stage-pipeline-cpu](https://github.com/lerogo/5-stage-pipeline-cpu)
-- 2021-09-22 星期三
-
----
 
 ## 文件介绍
 
