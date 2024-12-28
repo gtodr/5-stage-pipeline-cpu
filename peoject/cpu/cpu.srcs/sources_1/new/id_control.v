@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////
-// Module Name: id_control
-// Author:lerogo
+// æ¨¡å—å: id_control
+// ä½œè€…:lerogo
 //////////////////////////////////////////////////////////////////////////////////
 `ifndef _id_control
 `define _id_control
@@ -21,41 +21,41 @@ module id_control(
     output reg [4:0] rt_control_s2
     );
     always @(*) begin
-        //default
+        //é»˜è®¤å€¼
         is_imm_s2 <= 1'b0;
         is_branch_s2 <= 1'b0;
         is_jump_s2 <= 1'b0;
         mem_read_s2 <= 1'b0;
         mem_write_s2 <= 1'b0;
         write_back_s2 <= 1'b0;
-        // Ä¬ÈÏ¼Ä´æÆ÷
+        // é»˜è®¤å¯„å­˜å™¨
         rs_control_s2 <= rs_s2;
         rt_control_s2 <= rt_s2;
         
         case(opcode_s2)
-            // Ê¹ÓÃ3¸ö¼Ä´æÆ÷µÄ
+            // ä½¿ç”¨3ä¸ªå¯„å­˜å™¨çš„
             // 'add', 'sub', 'and', 'or', 'nor', 'xor', 'sll', 'srl', 'sra', 'slt'
             6'd1,6'd4,6'd5,6'd7,6'd9,6'd11,6'd31,6'd33,6'd35,6'd36: begin
                  write_back_s2 <= 1'b1;
             end
             
-            // Ê¹ÓÃ2¸ö¼Ä´æÆ÷ »¹ÓĞimmµÄ ¼òµ¥ÔËËã
+            // ä½¿ç”¨2ä¸ªå¯„å­˜å™¨ å¸¦æœ‰immçš„ ç«‹å³æ•°
             // 'addi', 'addiu', 'andi', 'ori', 'nori', 'xori' 'slli', 'srli', 'srai', 'slti'
             6'd2,6'd3,6'd6,6'd8,6'd10,6'd12,6'd30,6'd32,6'd34,6'd37: begin
                 write_back_s2 <= 1'b1;
                 is_imm_s2 <= 1'b1;
                 rt_control_s2 <= 5'b0; 
             end
-            // Ê¹ÓÃ2¸ö¼Ä´æÆ÷ »¹ÓĞimmµÄ ±È½ÏÔËËã Ìø×ª
+            // ä½¿ç”¨2ä¸ªå¯„å­˜å™¨ å¸¦æœ‰immçš„ æ¯”è¾ƒè·³è½¬
             // 'beq', 'beqz' ,'bne', 'bnez', 'bgt', 'bge', 'blt','ble'
-            // ÆäÖĞ bnez beqz Ö¸ÁîÌØÊâÒ»µã rtÄ¬ÈÏÎª0£¨Éú³ÉÖ¸ÁîÊ±£©
+            // è¿™é‡Œ bnez beqz æŒ‡ä»¤ç‰¹æ®Šä¸€ç‚¹ rté»˜è®¤ä¸º0ï¼Œå…¶ä»–æŒ‡ä»¤æ—¶
             6'd13,6'd14, 6'd15,6'd16,6'd17,6'd18,6'd19,6'd20:begin
                 is_branch_s2 <= 1'b1;
                 rs_control_s2 <= rd_s2;
                 rt_control_s2 <= rs_s2;
             end
             
-            // Ê¹ÓÃ2¸ö¼Ä´æÆ÷µÄ
+            // ä½¿ç”¨2ä¸ªå¯„å­˜å™¨çš„
             // 'lb', 'lh', 'lw'
             6'd24,6'd25,6'd26: begin
                 write_back_s2 <= 1'b1;
@@ -69,12 +69,12 @@ module id_control(
                 rt_control_s2 <= rd_s2;
             end
             
-            // ¾ÍÒ»¸öimmµÄ
+            // å¸¦ä¸€ä¸ªimmçš„
             // 'j'
             6'd21: begin
                 is_jump_s2 <= 1'b1;
             end
-            // ¾ÍÒ»¸ö¼Ä´æÆ÷µÄ
+            // å¸¦ä¸€ä¸ªå¯„å­˜å™¨çš„
             // 'jr'
             6'd23: begin
                 is_jump_s2 <= 1'b1;
@@ -87,23 +87,3 @@ module id_control(
     
 endmodule
 `endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

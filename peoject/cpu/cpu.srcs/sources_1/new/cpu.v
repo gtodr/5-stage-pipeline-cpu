@@ -1,10 +1,49 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Module Name: cpu
-// Author:lerogo
+// æ¨¡å—å: cpu
+// ä½œè€…:lerogo
+// æœ¬CPUæ˜¯ä¸€ä¸ªäº”çº§æµæ°´çº¿çš„MIPSå¤„ç†å™¨å®ç°ã€‚åŠŸèƒ½æœ‰:
+// æµæ°´çº¿ç»“æ„:
+// è¯¥CPUé‡‡ç”¨ç»å…¸çš„äº”çº§æµæ°´çº¿ç»“æ„:
+// IF (Instruction Fetch): æŒ‡ä»¤è·å–
+// ID (Instruction Decode): æŒ‡ä»¤è§£ç 
+// EX (Execute): æ‰§è¡Œ
+// MEM (Memory Access): å†…å­˜è®¿é—®
+// WB (Write Back): å†™å›
+// ä¸»è¦æ¨¡å—:
+// if_pc: ç¨‹åºè®¡æ•°å™¨,è´Ÿè´£ç”Ÿæˆä¸‹ä¸€æ¡æŒ‡ä»¤åœ°å€
+// if_im: æŒ‡ä»¤å†…å­˜,å­˜å‚¨æŒ‡ä»¤
+// id_decode: æŒ‡ä»¤è§£ç å™¨,è§£ææŒ‡ä»¤
+// id_control: æ§åˆ¶å•å…ƒ,ç”Ÿæˆæ§åˆ¶ä¿¡å·
+// reg_file: å¯„å­˜å™¨å †,å­˜å‚¨é€šç”¨å¯„å­˜å™¨
+// exe_alu: ç®—æœ¯é€»è¾‘å•å…ƒ,æ‰§è¡Œè¿ç®—
+// mem_dm: æ•°æ®å†…å­˜,ç”¨äºè¯»å†™æ•°æ®
+// reg_latches: æµæ°´çº¿å¯„å­˜å™¨,ç”¨äºå„çº§ä¹‹é—´ä¼ é€’æ•°æ®
+// æŒ‡ä»¤æ”¯æŒ:
+// æ”¯æŒMIPSæŒ‡ä»¤é›†çš„ä¸»è¦æŒ‡ä»¤,åŒ…æ‹¬:
+// ç®—æœ¯é€»è¾‘æŒ‡ä»¤
+// åŠ è½½å­˜å‚¨æŒ‡ä»¤(lb, lh, lw, sb, sh, sw)
+// åˆ†æ”¯è·³è½¬æŒ‡ä»¤
+// å†’é™©å¤„ç†:
+// æ•°æ®å†’é™©: ä½¿ç”¨å‰é€’(forwarding)æŠ€æœ¯è§£å†³
+// æ§åˆ¶å†’é™©: ä½¿ç”¨åˆ†æ”¯é¢„æµ‹å’Œæµæ°´çº¿åˆ·æ–°(flush)å¤„ç†
+// ç»“æ„å†’é™©: ä½¿ç”¨æµæ°´çº¿åœé¡¿(stall)å¤„ç†
+// 5. ç‰¹æ®ŠåŠŸèƒ½:
+// æ”¯æŒä¸åŒä½å®½çš„å†…å­˜è®¿é—®(8ä½ã€16ä½ã€32ä½)
+// å®ç°äº†ç«‹å³æ•°æ‰©å±•(æœ‰ç¬¦å·å’Œæ— ç¬¦å·)
+// æ”¯æŒè·³è½¬æŒ‡ä»¤(å¦‚jal)
+// 6. æµæ°´çº¿æ§åˆ¶:
+// ä½¿ç”¨holdä¿¡å·æ§åˆ¶æµæ°´çº¿åœé¡¿
+// ä½¿ç”¨flushä¿¡å·æ¸…é™¤æ— æ•ˆæŒ‡ä»¤
+// 7. å†…å­˜æ¥å£:
+// æŒ‡ä»¤å†…å­˜å’Œæ•°æ®å†…å­˜åˆ†ç¦»,é‡‡ç”¨å“ˆä½›æ¶æ„
+// æ”¯æŒå¯é…ç½®çš„å†…å­˜å¤§å°
+// æ€§èƒ½ä¼˜åŒ–:
+// ä½¿ç”¨å‰é€’æŠ€æœ¯å‡å°‘æµæ°´çº¿åœé¡¿
+// åœ¨åˆ†æ”¯æŒ‡ä»¤åç«‹å³è¿›è¡Œåˆ†æ”¯é¢„æµ‹å’Œå¤„ç†
 //////////////////////////////////////////////////////////////////////////////////
 
-//include
+//åŒ…å«å…¶ä»–æ¨¡å—
 `include "if_pc.v"
 `include "if_im.v"
 `include "reg_file.v"
@@ -16,43 +55,43 @@
 
 module cpu(clk,reset);
     input clk,reset;
-    // number of instruction memory
+    // æŒ‡ä»¤å†…å­˜æ•°é‡
     parameter MEM_NUM = 0;
-    // number of datamem
+    // æ•°æ®å†…å­˜æ•°é‡
     parameter MEM_DATA_NUM = 0;
-    // fileName of instructions restore 
+    // æŒ‡ä»¤å­˜å‚¨æ–‡ä»¶å
     parameter IM_DATA_FILENAME = "";
 
-    // holdÓÃÓÚ1->2µÈ´ıÖ´ĞĞÍê£¬flushÓÃÓÚbºÍjÖ¸ÁîºóµÄÖØÖÃ
+    // holdç”¨äº1->2ç­‰å¾…æ‰§è¡Œ,flushç”¨äºbå’ŒjæŒ‡ä»¤æ¸…é™¤
     reg hold,flush;
 
-    // µÚÒ»½×¶Î
-    // ÓÃÓÚ¶ÔpcµÄÑ¡Ôñ
+    // ç¬¬ä¸€é˜¶æ®µ
+    // ç”¨äºå¯¹pcçš„é€‰æ‹©
     reg [1:0] pcsource_s1;
-    // Ìø×ªµÄµØÖ· pcµØÖ·
+    // è·³è½¬çš„åœ°å€ pcåœ°å€
     reg [31:0] baddr_s1,jaddr_s1;
     wire [31:0] npc_s1;
-    // µÚÒ»½×¶Î»ñÈ¡µ½µÄÖ¸Áî
+    // ç¬¬ä¸€é˜¶æ®µè·å–åˆ°çš„æŒ‡ä»¤
     wire [31:0] im_data_s1;
     
-    // µÚ¶ş½×¶Î
-    // ´«µİµ½µÚ¶ş½×¶ÎµÄnpc_s2¡¢´«µİµ½µÚ¶ş½×¶ÎµÄim_data_s2
+    // ç¬¬äºŒé˜¶æ®µ
+    // ä¼ é€’åˆ°ç¬¬äºŒé˜¶æ®µçš„npc_s2å’Œä¼ é€’åˆ°ç¬¬äºŒé˜¶æ®µçš„im_data_s2
     wire [31:0] npc_s2,im_data_s2;
-    // ÒëÂëÊä³ö
+    // è§£ç ç»“æœ
     wire [5:0] opcode_s2;
     wire [4:0] rs_s2,rt_s2,rd_s2;
     wire [15:0] imm_s2;
     wire [31:0] jaddr_s2;
-    // b µÄµØÖ·
+    // b çš„åœ°å€
     wire [31:0] baddr_s2 = npc_s2 + { {14{imm_s2[15]}},imm_s2, 2'b0 };
-    // ¿ØÖÆÆ÷Êä³öµÄ¿ØÖÆĞÅºÅ
+    // æ§åˆ¶å•å…ƒè¾“å‡ºçš„ç›®æ ‡ä¿¡å·
     wire is_imm_s2,is_branch_s2,is_jump_s2,mem_read_s2,mem_write_s2,write_back_s2;
     wire [4:0] rs_control_s2,rt_control_s2;
-    // ¼Ä´æÆ÷»ñµÃµÄÖµ
+    // å¯„å­˜å™¨è¯»å–çš„å€¼
     wire [31:0] rs_data_s2,rt_data_s2;
     
-    // µÚÈı½×¶Î
-    // ´«µİ
+    // ç¬¬ä¸‰é˜¶æ®µ
+    // ä¼ é€’
     wire [5:0] opcode_s3;
     wire [4:0] rs_control_s3,rt_control_s3,rd_s3;
     wire [15:0] imm_s3;
@@ -63,32 +102,32 @@ module cpu(clk,reset);
     reg [31:0] alu_data1_s3,alu_data2_s3;
     wire [31:0] alu_out_s3;
     reg [1:0] rw_bits_s3;
-    // ¼ÆËãÏÂÒ»½×¶ÎÓÃµÄÊı¾İ
+    // ä¼ é€’åˆ°ä¸‹ä¸€é˜¶æ®µç”¨çš„æ•°æ®
     
-    // µÚËÄ½×¶Î
-    // ´«µİ
-    // Ğ´ÈëÄ¿±ê
+    // ç¬¬å››é˜¶æ®µ
+    // ä¼ é€’
+    // å†™å…¥ç›®æ ‡
     wire [5:0] opcode_s4;
     wire [4:0] rd_s4;
     wire [31:0] jaddr_s4,baddr_s4;
     wire is_branch_s4,is_jump_s4,mem_read_s4,mem_write_s4,write_back_s4;
-    // Èç¹ûÒª¶Á/Ğ´ÄÚ´æ ÄÇÃ´Ğ´memµÄµØÖ·Îªalu_out_s4
-    // Èç¹ûÒª»ØĞ´£¬ÄÇÃ´»ØĞ´Êı¾İÎªalu_out_s4
+    // å¦‚æœè¦è¯»/å†™å†…å­˜ é‚£ä¹ˆå†™memçš„åœ°å€ä¸ºalu_out_s4
+    // å¦‚æœè¦è¯»å†™åˆ™è¯»å†™æ•°æ®ä¸ºalu_out_s4
     wire [31:0] alu_out_s4;
-    // ¶Á/Ğ´ÄÚ´æÊ±£¬¶ÁĞ´¶àÉÙÎ» Ä¬ÈÏÎª00 32Î»    
+    // è¯»/å†™å†…å­˜æ—¶çš„è¯»å†™ä½æ•° é»˜è®¤ä¸º00 32ä½    
     wire [1:0] rw_bits_s4;
-    // ¶ÁÄÚ´æµÄ½á¹û    // Ğ´ÄÚ´æµÄÊı¾İ
+    // è¯»å†…å­˜çš„ç»“æœ    // å†™å†…å­˜çš„æ•°æ®
     wire [31:0] mem_read_data_s4,write_data_s4;
-    // »ØĞ´Êı¾İ
+    // æœ€ç»ˆå†™æ•°æ®
     wire [31:0] wdata_s4;
     
-    // µÚÎå½×¶Î
-    // ´«µİ
+    // ç¬¬äº”é˜¶æ®µ
+    // ä¼ é€’
     wire write_back_s5,mem_read_s5;
     wire [4:0] rd_s5;
     wire [31:0] wdata_s5,alu_out_s5,mem_read_data_s5;
 
-    // ÆäËû ÓÃÓÚ4£¬5½×¶ÎĞŞ¸ÄregÊı¾İ Ö±½Ó¶ÌÁ´Èı½×¶ÎµÄ¼Ä´æÆ÷
+    // å†’é™© å¤„ç†4ã€5é˜¶æ®µä¿®æ”¹regæ•°æ® ç›´æ¥è¯»ç¬¬ä¸‰é˜¶æ®µçš„å¯„å­˜å™¨
     reg [1:0] forward_a,forward_b;
   
 
@@ -99,68 +138,68 @@ module cpu(clk,reset);
         forward_a <= 1'b0;
         forward_b <= 1'b0;
     end
-    // µÚÒ»½×¶Î
-    //Àı»¯pc
+    // ç¬¬ä¸€é˜¶æ®µ
+    //ç¨‹åºè®¡æ•°å™¨pc
     if_pc if_pc1(
         .clk(clk),.reset(reset),
         .pcsource_s1(pcsource_s1),.baddr_s1(baddr_s1),.jaddr_s1(jaddr_s1),
         .pc_s1(npc_s1),.npc_s1(npc_s1)
     );
-    // Àı»¯Ö¸Áî¶ÁÈ¡
+    // æŒ‡ä»¤å†…å­˜å–æŒ‡
     if_im #(.MEM_NUM(MEM_NUM),.IM_DATA_FILENAME(IM_DATA_FILENAME)) if_im1(
         .clk(clk),.npc_s1(npc_s1),.im_data_s1(im_data_s1)
     );
-    // °ÑµÚÒ»½×¶ÎµÄÖ¸Áî×ªµ½µÚ¶ş½×¶Î £¨ÓĞÌõ¼ş×ªÒÆ£©
+    // æŠŠç¬¬ä¸€é˜¶æ®µçš„æŒ‡ä»¤è½¬åˆ°ç¬¬äºŒé˜¶æ®µ ï¼ˆæµæ°´çº¿è½¬ç§»ï¼‰
     reg_latches #(.N(32*2)) reg_latches_s1_1(
         .clk(clk),.clear(flush),.hold(hold),
         .in({npc_s1,im_data_s1}),.out({npc_s2,im_data_s2})
     );
 
-    // µÚ¶ş½×¶Î
-    // Àı»¯Ö¸ÁîÒëÂë
+    // ç¬¬äºŒé˜¶æ®µ
+    // æŒ‡ä»¤è§£ç å™¨
     id_decode id_decode1(
         .npc_s2(npc_s2),.im_data_s2(im_data_s2),
         .opcode_s2(opcode_s2),.rs_s2(rs_s2),.rt_s2(rt_s2),.rd_s2(rd_s2),
         .imm_s2(imm_s2),.jaddr_s2(jaddr_s2)
     );
-    // Àı»¯¿ØÖÆÖ¸Áî
+    // æ§åˆ¶å•å…ƒæŒ‡ä»¤
     id_control id_control1(
         .opcode_s2(opcode_s2),.imm_s2(imm_s2),.rs_s2(rs_s2),.rt_s2(rt_s2),.rd_s2(rd_s2),
         .is_imm_s2(is_imm_s2),.is_branch_s2(is_branch_s2),.is_jump_s2(is_jump_s2),
         .mem_read_s2(mem_read_s2),.mem_write_s2(mem_write_s2),.write_back_s2(write_back_s2),
         .rs_control_s2(rs_control_s2),.rt_control_s2(rt_control_s2)
     );
-    // Àı»¯¼Ä´æÆ÷¶Ñ
+    // å¯„å­˜å™¨å †
     reg_file reg_file1(
        .clk(clk),.reset(reset),.write_back_s5(write_back_s5),
        .rs_s2(rs_control_s2),.rt_s2(rt_control_s2),.rd_s5(rd_s5),.wdata(wdata_s5),
        .rs_data_s2(rs_data_s2),.rt_data_s2(rt_data_s2)
     );
-    // ×ªÒÆÊı¾İ
-   // ¿ØÖÆĞÅºÅÒ»¶¨»á´«ÏÂÈ¥ »òÕßÍ£Ò»´Î(lw swÁ¬ĞøÊ±)
+    // è½¬ç§»æ•°æ®
+   // æ§åˆ¶ä¿¡å·ä¸€å®šä¼šä¼ è¿‡å» ä½†å¯èƒ½åœä¸€æ‹(lw swå†²çªæ—¶)
    reg_latches #(.N(6+6)) reg_latches_s2_1(
         .clk(clk),.clear(hold | flush),.hold(1'b0),
         .in({opcode_s2,is_imm_s2,is_branch_s2,is_jump_s2,mem_read_s2,mem_write_s2,write_back_s2}),
         .out({opcode_s3,is_imm_s3,is_branch_s3,is_jump_s3,mem_read_s3,mem_write_s3,write_back_s3})
     );
-   // Êı¾İ²»±ä »òÕßÇå³ı
+   // æ•°æ®éƒ¨åˆ† å¯èƒ½ä¼šåœ
    reg_latches #(.N(5*3+16+32*2+32*2)) reg_latches_s2_2(
         .clk(clk),.clear(flush),.hold(hold),
         .in({rs_control_s2,rt_control_s2,rd_s2,imm_s2,jaddr_s2,baddr_s2,rs_data_s2,rt_data_s2}),
         .out({rs_control_s3,rt_control_s3,rd_s3,imm_s3,jaddr_s3,baddr_s3,rs_data_s3,rt_data_s3})
     );
     
-    // µÚÈı½×¶Î
-    // »ñµÃaluÁ½±ßµÄ²Ù×÷Êı
+    // ç¬¬ä¸‰é˜¶æ®µ
+    // ç»™aluè¾“å…¥çš„å‚æ•°
     always @(*) begin
-        // Ö»»á´æÔÚÓÉÓÚĞ´»ØÎÊÌâ¶ø¶ÌÁ´£¬·ÃÎÊmemÖ±½ÓÍ£Ò»´Î
+        // åªæœ‰ä¸¤ä¸ªè¯»å¯„å­˜å™¨çš„æ•°æ®å¯èƒ½ä¼šå†’é™©ï¼Œå…¶ä»–æ•°æ®memç›´æ¥åœä¸€æ‹
         case(forward_a)
             2'd1: alu_data1_s3 = alu_out_s4;
             2'd2: alu_data1_s3 = wdata_s5;
             default: alu_data1_s3 = rs_data_s3;
         endcase
         if(is_imm_s3) begin
-            // ÕâÀï½â¾öÅªµÃÒ»¸öaddiu ÔçÖªµÀ²»ÅªÕâ¸öÖ¸ÁîÁË
+            // è¿™é‡Œæäº†ä¸€ä¸ªaddiu ä¸çŸ¥é“å…¶ä»–æä¸æè¿™ä¸ªæŒ‡ä»¤
             if(opcode_s3==6'd3) alu_data2_s3 = { {16{1'b0}},imm_s3};
             else alu_data2_s3 = { {16{imm_s3[15]}},imm_s3};
         end else begin 
@@ -171,25 +210,25 @@ module cpu(clk,reset);
             endcase
         end
     end
-    // Àı»¯alu
+    // è¿ç®—alu
     exe_alu exe_alu1(
         .alu_op_s3(opcode_s3),.alu_data1_s3(alu_data1_s3),.alu_data2_s3(alu_data2_s3),
         .alu_out_s3(alu_out_s3)
     );
-    // µ¥¶À¼ÆËãÒ»ÏÂ·ÃÎÊÄÚ´æÊ±µÄ·ÃÎÊ¶àÉÙÎ»
+    // ä¼ é€’ä¸‹ä¸€æ­¥è®¿é—®å†…å­˜æ—¶çš„è®¿é—®å¤šå°‘ä½
     always @(*) begin
         if(mem_read_s3|mem_write_s3==1'b1) begin
             case(opcode_s3)
-                // 8Î» lb sb
+                // 8ä½ lb sb
                 6'd24,6'd27: rw_bits_s3 <= 2'd1;
-                // 16Î» lh sh
+                // 16ä½ lh sh
                 6'd25,6'd28: rw_bits_s3 <= 2'd2;
-                // 32Î»
+                // 32ä½
                 default:rw_bits_s3 <= 2'd0;
             endcase
         end
     end
-    // ´«µİ
+    // ä¼ é€’
     reg_latches #(.N(5+32*2+6 + 5 + 32+2+32)) reg_latches_s3_1(
         .clk(clk),.clear(flush),.hold(1'b0),
         .in({   rd_s3,jaddr_s3,baddr_s3,opcode_s3,
@@ -202,14 +241,14 @@ module cpu(clk,reset);
          })
     );
     
-    // µÚËÄ½×¶Î mem
-    // Àı»¯datamem ·Ã´æ
+    // ç¬¬å››é˜¶æ®µ mem
+    // æ•°æ®datamem è®¿é—®
     mem_dm #(.MEM_NUM(MEM_DATA_NUM)) mem_dm1(
         .clk(clk),.alu_out_s4(alu_out_s4),.mem_read_s4(mem_read_s4),.mem_write_s4(mem_write_s4),
         .write_data_s4(write_data_s4),.rw_bits_s4(rw_bits_s4),
         .mem_read_data_s4(mem_read_data_s4)
     );
-    // jump branch´¦Àí
+    // jump branchå¤„ç†
     always @(*) begin
         // default
         pcsource_s1 <= 2'b01;
@@ -232,19 +271,19 @@ module cpu(clk,reset);
 			end
 		endcase
 	end
-	//´«µİ
+	//ä¼ é€’
 	reg_latches #(.N(5+2+32*2)) reg_latches_s4_1(
         .clk(clk),.clear(1'b0),.hold(1'b0),
         .in({   rd_s4,write_back_s4,alu_out_s4,mem_read_s4,mem_read_data_s4 }),
         .out({  rd_s5,write_back_s5,alu_out_s5,mem_read_s5,mem_read_data_s5 })
     );
     
-	// µÚÎå½×¶Î
-    // ¼ÆËã»ØĞ´Êı¾İ
+	// ç¬¬äº”é˜¶æ®µ
+    // æœ€ç»ˆçš„å†™æ•°æ®
     assign wdata_s5 = mem_read_s5 ? mem_read_data_s5:alu_out_s5;
     
-    // ½â¾ö³åÍ»
-    // ÌáÇ° ¶Ì½ÓÈëÉÏÒ»Ö¸Áî
+    // å¤„ç†å†²çª
+    // å‰é€’ è§£å†³ç›¸é‚»æŒ‡ä»¤
     always @(*) begin
 		if ((write_back_s4 == 1'b1) && (rd_s4 == rs_control_s3)) begin
 			forward_a <= 2'd1;
@@ -259,7 +298,7 @@ module cpu(clk,reset);
 		end else
 			forward_b <= 2'd0;
 	end
-    // Èç¹ûÒª¶ÁÄÚ´æ
+    // å¦‚æœè¦è¯»å†…å­˜
     always @(*) begin
 		if (mem_read_s3 == 1'b1 && ((rs_control_s2 == rd_s3) || (rt_control_s2 == rd_s3)) ) begin
 			hold <= 1'b1;
@@ -268,5 +307,3 @@ module cpu(clk,reset);
 	   if(hold) pcsource_s1 <= 2'b00;
 	end
 endmodule
-
-

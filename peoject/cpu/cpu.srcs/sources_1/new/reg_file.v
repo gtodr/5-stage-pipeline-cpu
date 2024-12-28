@@ -16,40 +16,49 @@ module reg_file(
     output [31:0] rs_data_s2,
     output [31:0] rt_data_s2
  );
-    // 32-bit memory with 32 entries
+    // 32位寄存器文件,共32个寄存器
     reg [31:0] mem [0:31];
     reg [31:0] _data1, _data2;
     integer i = 0;
+    
+    // 复位时将所有寄存器清零
     always @(negedge reset) begin
-    	for (i = 0; i < 32; i = i + 1) begin
-			mem[i] <= 32'b0;
-		end
+        for (i = 0; i < 32; i = i + 1) begin
+            mem[i] <= 32'b0;
+        end
     end
+    
+    // 读取rs寄存器的值
     always @(*) begin
-		if (rs_s2 == 5'd0)
-			_data1 = 32'd0;
-	    // ���д������
-		else if ((rs_s2 == rd_s5) && write_back_s5)
-			_data1 = wdata;
-		else
-			_data1 = mem[rs_s2][31:0];
+        if (rs_s2 == 5'd0)
+            _data1 = 32'd0;  // 0号寄存器始终为0
+        // 处理数据冒险:如果正在写入的寄存器就是要读取的寄存器,直接使用写入的值
+        else if ((rs_s2 == rd_s5) && write_back_s5)
+            _data1 = wdata;
+        else
+            _data1 = mem[rs_s2][31:0];
     end
+    
+    // 读取rt寄存器的值(逻辑同上)
     always @(*) begin
-		if (rt_s2 == 5'd0)
-			_data2 = 32'd0;
-		else if ((rt_s2 == rd_s5) && write_back_s5)
-			_data2 = wdata;
-		else
-			_data2 = mem[rt_s2][31:0];
+        if (rt_s2 == 5'd0)
+            _data2 = 32'd0;
+        else if ((rt_s2 == rd_s5) && write_back_s5)
+            _data2 = wdata;
+        else
+            _data2 = mem[rt_s2][31:0];
     end
+    
+    // 输出读取的寄存器值
     assign rs_data_s2 = _data1;
-	assign rt_data_s2 = _data2;
-	
-	always @(posedge clk) begin
-		if (write_back_s5 && rd_s5 != 5'd0) begin
-			mem[rd_s5] <= wdata;
-		end
-	end
+    assign rt_data_s2 = _data2;
+    
+    // 在时钟上升沿写入寄存器
+    always @(posedge clk) begin
+        if (write_back_s5 && rd_s5 != 5'd0) begin
+            mem[rd_s5] <= wdata;
+        end
+    end
     
 endmodule
 
